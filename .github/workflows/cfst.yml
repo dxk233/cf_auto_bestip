@@ -1,0 +1,34 @@
+name: CFST Auto BestIP
+
+on:
+  schedule:
+    - cron: '0 */3 * * *' # 每6小时运行一次（UTC时间）
+  workflow_dispatch: # 允许手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run CFST Select
+        env:
+          IP_SOURCE_URL: ${{ secrets.IP_SOURCE_URL }}
+        run: node cfst_select.js
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/cfst_select/preferred_ips.txt
+          git commit -m "Update preferred IPs" || exit 0
+          git push
